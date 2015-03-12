@@ -12,15 +12,17 @@ class traf::jenkins (
   $ssl_chain_file_contents = '',
   $jenkins_ssh_private_key = '',
   $zmq_event_receivers = [],
+  $subnet = '255.255.255.0/24',
   $sysadmins = []
 ) {
   include traf
 
   $iptables_rule = regsubst ($zmq_event_receivers, '^(.*)$', '-m state --state NEW -m tcp -p tcp --dport 8888 -s \1 -j ACCEPT')
+  $slave_rule = "-m tcp -p tcp -s $subnet --dport 49993 -j ACCEPT"
   class { 'traf::server':
     iptables_public_tcp_ports => [80, 443, 8080],
     iptables_rules6           => $iptables_rule,
-    iptables_rules4           => $iptables_rule,
+    iptables_rules4           => concat($iptables_rule,$slave_rule),
     sysadmins                 => $sysadmins,
   }
 
